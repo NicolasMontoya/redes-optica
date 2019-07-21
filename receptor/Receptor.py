@@ -2,24 +2,20 @@
 # -*- coding: utf-8 -*-
 import cv2
 from matplotlib import pyplot as plt
+import numpy as np
 
 
 class Receptor:
+    BLACK = np.zeros((100,100,3), dtype=np.uint8)
     SIMBOL_MASK = 0xF0
-    PARTITY = 0x08
-    REPEAT = 0x07
+    REPEAT = 0x0F
     def __init__(self):
         self.images = []
     def decode(self, code):
         intDecode = int(code, 2)
         simbol = (intDecode & self.SIMBOL_MASK) >> 4
-        parity = (intDecode & self.PARTITY) >> 3
-        if ( bool(parity) == (bool(code[0]) ^ bool(code[1]) ^ bool(code[2]) ^ bool(code[3]))  ):
-            repeat = (intDecode & self.REPEAT)
-            return simbol, repeat, 1
-        else:
-            print("LA PARIDAD NO COINCIDE... REPIRA EL CARÁCTER")
-            return None, None, 0
+        repeat = (intDecode & self.REPEAT)
+        return simbol, repeat, 1
     def analize(self):
         size = 0;
         flag = False
@@ -27,8 +23,11 @@ class Receptor:
         savedImage = []
         rowImage = []
         fulRowImage = []
-        while True:
-            data = input("Ingrese el dato \n")
+        k = 0
+        total = input("Ingrese el dato \n")
+        for i in range(8, len(total) + 8, 8):
+            data = total[k:i]
+            k = i
             [sim, rep, ver] = self.decode(data)
             if ver == 1:
                 if sim != 8:
@@ -55,8 +54,15 @@ class Receptor:
                         (_, size, _) = fulRowImage.shape
                         savedImage = fulRowImage
                     else:
-                        savedImage = savedImage[:,:800,:]
+                        (_, sizeRow, _) = fulRowImage.shape
+                        if sizeRow < size:
+                            for p in range(0, (size - sizeRow), 100):
+                                fulRowImage = cv2.hconcat((fulRowImage, self.BLACK))
+                        else:         
+                            fulRowImage = fulRowImage[:,:size+0,:]
                         savedImage = cv2.vconcat((savedImage, fulRowImage))
+                            
+                            
                     fulRowImage = []
                     plt.imshow(savedImage)
                     plt.show()
