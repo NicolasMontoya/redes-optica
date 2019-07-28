@@ -8,14 +8,27 @@ import numpy as np
 class Receptor:
     BLACK = np.zeros((100,100,3), dtype=np.uint8)
     SIMBOL_MASK = 0xF0
-    REPEAT = 0x0F
+    REPEAT = 0x07
+    PARTITY = 0x08
     def __init__(self):
         self.images = []
+    def in_parallel(v):
+        v ^= v >> 16
+        v ^= v >> 8
+        v ^= v >> 4
+        v &= 0xf
+        return (0x6996 >> v) & 1
     def decode(self, code):
         intDecode = int(code, 2)
+        code = intDecode & 0xF7
         simbol = (intDecode & self.SIMBOL_MASK) >> 4
         repeat = (intDecode & self.REPEAT)
-        return simbol, repeat, 1
+        parity = (intDecode & self.PARTITY) >> 3
+        if (self.in_parallel(code) == parity):
+            return simbol, repeat, 1
+        else:
+            print("LA PARIDAD NO COINCIDE... REPIRA EL CARÁCTER")
+            return None, None, 0
     def analize(self):
         size = 0;
         flag = False
@@ -30,7 +43,9 @@ class Receptor:
             k = i
             [sim, rep, ver] = self.decode(data)
             if ver == 1:
-                if sim != 8:
+                if sim > 8:
+                    print("El simbolo no existe, repita de nuevo")
+                elif sim != 8:
                     if not flag:
                         flag = True
                         loadImage = cv2.imread("receptor/" + str(sim) + ".png")
@@ -67,3 +82,4 @@ class Receptor:
                     plt.imshow(savedImage)
                     plt.show()
                     flag = True
+                    
