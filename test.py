@@ -6,15 +6,11 @@ Created on Sat Jun 29 21:39:58 2019
 @author: nicolas
 """
 
-import cv2
-from matplotlib import pyplot as plt
+def in_parallel(v):
+    v ^= v >> 16
+    v ^= v >> 8
+    v ^= v >> 4
+    v &= 0xf
+    return (0x6996 >> v) & 1
 
-
-img = cv2.imread("receptor/1.png")
-im = cv2.hconcat((img,img))
-ex = cv2.hconcat((im,img))
-
-plt.subplot(2, 2, 1), plt.imshow(im)
-plt.subplot(2, 2, 1), plt.imshow(ex)
-
-plt.show()
+print(in_parallel(97))
